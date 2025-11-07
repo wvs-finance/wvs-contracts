@@ -1,5 +1,17 @@
-- Integration with VIX
+- Create the SocketManager contract on the Reactive Network chain to go ahead and deploy the SocketContract associated with
+the user's logged in address
+  - The SocketManager receives the origin address and it's chain Id
+  - The SocketManager is a MetaProxyDeployer
+  - The SocketManager deploys SocketContracts using createX
+  - The SocketManager lives on the Reactive-Network
+  - The Socket is a MinimalProxy
+  - The Socket is a AsbtractPausableReactive
+  - The Socket hears the PositionManager
 
+
+
+
+======== Integration with VIX
 - I am an LP and already have a position on a Uniswap V3 Pair. I want to use variance swaps to hedge mmy position dynamically
 to do so:
 

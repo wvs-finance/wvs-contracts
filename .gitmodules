@@ -16,3 +16,18 @@
 [submodule "lib/universal-router"]
 	path = lib/universal-router
 	url = https://github.com/Uniswap/universal-router
+[submodule "lib/reactive-smart-contract-demos"]
+	path = lib/reactive-smart-contract-demos
+	url = https://github.com/Reactive-Network/reactive-smart-contract-demos
+[submodule "lib/euler-vault-kit"]
+	path = lib/euler-vault-kit
+	url = https://github.com/euler-xyz/euler-vault-kit
+[submodule "lib/createx"]
+	path = lib/createx
+	url = https://github.com/pcaversaccio/createx
+[submodule "lib/Compose"]
+	path = lib/Compose
+	url = https://github.com/Perfect-Abstractions/Compose
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/Vectorized/solady
