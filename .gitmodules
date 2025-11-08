@@ -31,3 +31,6 @@
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/Vectorized/solady
+[submodule "lib/limit-order-protocol"]
+	path = lib/limit-order-protocol
+	url = https://github.com/1inch/limit-order-protocol

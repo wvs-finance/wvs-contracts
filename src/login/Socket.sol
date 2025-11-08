@@ -5,21 +5,26 @@ pragma solidity 0.8.26;
 // The metadata is the tokenId
 //   - The Socket is a AsbtractPausableReactive
 //   - The Socket hears the PositionManager
-// import {
-//     AbstractPausableReactive,
-//     IReactive
-// }
+import {IERC721} from "forge-std/interfaces/IERC721.sol";
+import {AbstractPausableReactive} from "reactive-lib/abstract-base/AbstractPausableReactive.sol";
+
 import "./SocketServer.sol";
-// import {LibCall} from "solady/"
 import "./Listener.sol";
 
+// LOG0 = 0xA0 (160) — 0 topics
+// LOG1 = 0xA1 (161) — 1 topic
+// LOG2 = 0xA2 (162) — 2 topics
+// LOG3 = 0xA3 (163) — 3 topics
+// LOG4 = 0xA4 (164) — 4 topics
+
+
 interface ISocket{
+    function subscribe(uint256 op_code, uint256[3] memory _encoded_topic_values) external;
 
 }
 
 
 contract Socket is ISocket, AbstractPausableReactive{
-    using LibCall for address;
     // NOTE: This is supposed to be param,terics but
     // from now is manual
     
@@ -32,8 +37,7 @@ contract Socket is ISocket, AbstractPausableReactive{
 
 
    struct SocketStorage{
-        bytes32  event_selector;
-        address  callback;
+        bytes _storage;
    }
 
     function getStorage() internal pure returns (SocketStorage storage $){
@@ -43,80 +47,52 @@ contract Socket is ISocket, AbstractPausableReactive{
         }
     }
 
-    function _setListener(address _listener) internal{
-        SocketStorage $ = getStorage();
-        $.callback = _listener;
+// LOG0 = 0xA0 (160) — 0 topics
+// LOG1 = 0xA1 (161) — 1 topic
+// LOG2 = 0xA2 (162) — 2 topics
+// LOG3 = 0xA3 (163) — 3 topics
+// LOG4 = 0xA4 (164) — 4 topics
+// Deployments occur both on the 
+// - Reactive Network, 
+// - Deployer's private ReactVM, 
+//      - The system contract is not present
 
-    }
-
-    fucntion getListener() public view returns(address _listener){
-        SocketStorage $ = getStorage();
-        _listener = $.callback;
-    }
-
-    function _set_event_selector(bytes4 _event_selector) internal{
-        SocketStorage $ = getStorage();
-        $.event_selector = _event_selector;
-    }
-
-    function get_event_selector() public view returns(bytes4 _event_selector){
-        SocketStorage $ = getStorage();
-        _event_selector = bytes4($.event_selector);   
-
-    }
-
-
-
-    
-    constructor(address _listener, bytes32 _event_selector) AbstractPausableReactive{
-        {
-            _setListener(_listener);
-            _set_event_selector(_event_selector);
-        }
-        (Port memory _port,) = metadata();
-        (bool _ok,) = address(service).call(
-            abi.encodeCall(
-                ISubscriptionService.subscribe,
-                (
-                    _port.origin_chain_id,
-                    _port.endpoint,
-                    uint256(_event_selector),
-                    REACTIVE_IGNORE,
-                    REACTIVE_IGNORE,
-                    REACTIVE_IGNORE
-                )
-            )
-        ); 
-        vm = !_ok;
-
-
-
-
-
-
-   
+    function subscribe(uint256 op_code, uint256[3] memory _encoded_topic_values) external rnOnly {
+        (Port memory _port,SocketSubscription memory _socket_subscription) = _metadata();
+        
+        service.subscribe(
+            _port.origin_chain_id,
+            _port.endpoint,
+            uint256(bytes32(_socket_subscription.event_selector)),
+            op_code == uint256(0xA1) ? _encoded_topic_values[0x00]: REACTIVE_IGNORE ,
+            op_code == uint256(0xA2) ? _encoded_topic_values[0x01]: REACTIVE_IGNORE,
+            op_code == uint256(0xA3) ? _encoded_topic_values[0x01]: REACTIVE_IGNORE
+        );
+        // NOTE: Set's the the VM back on
+        vm = true;
     }
 
 
-    function react(LogRecord calldata log) external{
-        (Port memory _port, address target) = metadata();
-        if  (
-            log.chainId == _port.origin_chain_id &&
-            log._contract == _port.endpoint &&
-            uint160(address(log.topic1)) == address(0x00) &&
-            bytes4(uint32(log.topic_0)) && get_event_selector() &&
-            (tx.origin == target || IERC721(this.owner()).ownerOf(log.topic_3) == target) 
-        )
-        {
-            
-            IListener(getListener()).unlockHedge();
+
+// log.topic1 == address(0x00)
+// &&
+// (tx.origin == _subscription.target || IERC721(this.owner()).ownerOf(log.topic_3) == _subscription.target)
+// 
+
+
+    function react(LogRecord calldata log) external vmOnly(){
+
+        (Port memory _port, SocketSubscription memory _subscription) = _metadata();
+        if  (!(log.chain_id == _port.origin_chain_id && log._contract == _port.endpoint && bytes4(uint32(log.topic_0)) == _subscription.event_selector)) revert("Invalid Event to react");
+        // TODO: This needs to be a protgramtic condition
+        if (address(uint160(log.topic_1)) == address(0x00) && IERC721(_port.endpoint).ownerOf(log.topic_3) == _subscription.target){
+            IListener(_subscription.listener).on_log(log, _subscription.target);
         }
 
-
     }
-
     
-    function metadata() private pure returns(Port memory _port, address _target){
+    function _metadata() private pure returns(Port memory _port, SocketSubscription memory _subscription){
+        bytes memory data;
         assembly {
             let posOfMetadataSize := sub(calldatasize(), 32)
             let size := calldataload(posOfMetadataSize)
@@ -129,6 +105,10 @@ contract Socket is ISocket, AbstractPausableReactive{
         }
 
         //return the decoded the metadata
-        (_port, _target) = abi.decode(data, (Port, address));
+        (_port, _subscription) = abi.decode(data, (Port, SocketSubscription));
+    }
+
+    function getPausableSubscriptions() override internal view returns (Subscription[] memory){
+
     }
 }
