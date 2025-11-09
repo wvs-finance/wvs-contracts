@@ -91,7 +91,7 @@ contract Socket is ISocket, AbstractPausableReactive{
 
     }
     
-    function _metadata() private pure returns(Port memory _port, SocketSubscription memory _subscription){
+    function _metadata() internal pure returns(Port memory _port, SocketSubscription memory _subscription){
         bytes memory data;
         assembly {
             let posOfMetadataSize := sub(calldatasize(), 32)

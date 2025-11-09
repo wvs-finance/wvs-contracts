@@ -85,10 +85,12 @@ contract SocketServer is MetaProxyDeployer, ISocketServer{
         _nonce = $.nonces[_user];
     }
 
-    function _increment_nonce(address _user) private{
+    function _increment_nonce(address _user) internal{
         SocketServerStorage storage $ = getStorage();
         $.nonces[_user]++;
     }
+
+
 
 
     function listen(address _listener) external{
@@ -119,6 +121,11 @@ contract SocketServer is MetaProxyDeployer, ISocketServer{
             target: _target,
             event_selector: bytes4(_event_selector)
         });
+    }
+
+    function _get_socket_subscription(address _socket) internal returns(SocketSubscription memory _socket_subscription){
+        SocketServerStorage storage $ = getStorage();
+        _socket_subscription = $.subscriptions[_socket];
     }
 
     function _get_socket(address _publisher, address _predicted_socket_address) internal virtual returns(address _socket){

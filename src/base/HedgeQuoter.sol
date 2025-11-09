@@ -8,9 +8,9 @@ interface IHedgeQuoter{
     
     
     enum Status{
-        ACTIVE;
-        SETTLED;
-        CANCELLED;
+        ACTIVE,
+        SETTLED,
+        CANCELLED
     }
 
     struct Hedge{
