@@ -4,14 +4,6 @@ pragma solidity ^0.8.26;
 
 import {IReactive} from "reactive-lib/interfaces/IReactive.sol";
 
-// import {AbstractCallback} from ""
-// import {AccessControl} from 
-// import {EnumerableMap} from 
-// import {ISubscriber}
-// import {INotifier}
-// import {IReactive}
-
-
 interface IListener{
     function get_event_selector() external returns(bytes4);
     function set_event_selector(bytes32 _event_selector) external;
@@ -33,6 +25,12 @@ library LibListener{
             $.slot := position
         }
     }
+
+    function set_event_selector(bytes32 _event_selector) internal{
+        ListenerStorage storage $ = getStorage();
+        $.event_selector = bytes4(_event_selector);
+    }
+
 }
 
 

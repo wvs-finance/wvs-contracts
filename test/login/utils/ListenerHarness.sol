@@ -6,5 +6,5 @@ import "../../../src/login/Listener.sol";
 
 contract ListenerHarness is Listener{
     
-    function _on_log(IReactive.LogRecord memory _log, address _dst) internal override{}
+    function _on_log(IReactive.LogRecord memory _log, address _dst) internal override {}
 }

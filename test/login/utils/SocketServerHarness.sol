@@ -6,20 +6,15 @@ import "../../../src/login/SocketServer.sol";
 
 contract SocketServerHarness is SocketServer{
     
-    function set_socket_subscription(address _socket, address _listener, address _target, bytes32 _event_selector) external {
-        _set_socket_subscription(_socket,_listener,_target,_event_selector);
+    function deploy_socket(address _caller, bytes4 _event_selector) external returns(address _socket){
+        _socket = _deploy_socket( _caller, _event_selector);
     }
 
-    function get_socket_subscription(address _socket) external returns(SocketSubscription memory _socket_subscription){
-        _socket_subscription =_get_socket_subscription(_socket);
+    function set_socket_subscription(address _socket,address _target, bytes4 _event_selector) external {
+        _set_socket_subscription(_socket,_target,_event_selector);
     }
 
-    function increment_nonce(address _user) external{
-        _increment_nonce(_user);
-    }
 
-    function nonce_harness(address _user) external returns(uint256 _nonce){
-        _nonce = nonce(_user);
-    }
+
 }
 
