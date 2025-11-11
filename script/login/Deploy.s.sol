@@ -5,7 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {MockOriginSimple} from "../../test/login/utils/MockOriginSimple.sol";
 import {MockDestinationSimple} from "../../test/login/utils/MockDestinationSimple.sol";
 import "../../test/fork/ForkUtils.sol";
-import {SocketServer} from "../../src/login/SocketServer.sol";
+// import {SocketServer} from "../../src/login/SocketServer.sol";
 
 contract DeployNonReactive is Script {
     function deploy() external returns(address, address){
@@ -31,9 +31,10 @@ contract DeployReactive is Script{
 
     function run() public returns(address){
         vm.broadcast();
-        address socket_server = address(new SocketServer{value: 0.5 ether}());
-        console2.log(socket_server);
-        return socket_server;
+        // address socket_server = address(new SocketServer{value: 0.5 ether}());
+        // console2.log(socket_server);
+        // return socket_server;
+        return address(0);
 
 
     }

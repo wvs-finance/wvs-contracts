@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Script, console2} from "forge-std/Script.sol";
-import "../../src/login/SocketServer.sol";
+// import "../../src/login/SocketServer.sol";
 import {DevOpsTools} from "foundry-devops/DevOpsTools.sol";
 import {DeployReactive} from "./Deploy.s.sol";
 import "../../test/fork/ForkUtils.sol";
@@ -36,26 +36,26 @@ contract Login is Script{
             SEPOLIA_CHAIN_ID
         );
 
-        if (socket_server == address(0x00)){
-            vm.broadcast();
-            socket_server = address(new SocketServer());
-        }
+        // if (socket_server == address(0x00)){
+        //     vm.broadcast();
+        //     socket_server = address(new SocketServer());
+        // }
 
-        vm.startBroadcast();
-        // AbstractPayer(socket_server).coverDebt();
-        address _socket = ISocketServer(socket_server).listen(
-            SEPOLIA_CHAIN_ID,
-            _origin,
-            _destination,
-            mock_event_selectors
-        );
+        // vm.startBroadcast();
+        // // AbstractPayer(socket_server).coverDebt();
+        // address _socket = ISocketServer(socket_server).listen(
+        //     SEPOLIA_CHAIN_ID,
+        //     _origin,
+        //     _destination,
+        //     mock_event_selectors
+        // );
 
-        console2.log("Socket Address:", _socket);
-        address __origin = ISocket(_socket).origin();
+        // console2.log("Socket Address:", _socket);
+        // address __origin = ISocket(_socket).origin();
 
-        console2.log("Origin:", __origin);
+        // console2.log("Origin:", __origin);
 
-        vm.stopBroadcast();
+        // vm.stopBroadcast();
     }
 
     function direct_socket_deployment() external{
