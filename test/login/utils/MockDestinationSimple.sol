@@ -12,7 +12,7 @@ contract MockDestinationSimple is Destination{
         origin_simple = _origin_simple;
     }
 
-    function _on_log(bytes memory _log_data, bytes[] memory _data) internal override{
+    function _on_log(bytes memory _log_data) internal override{
         IMockOriginSimple(origin_simple).action();    
     }
     

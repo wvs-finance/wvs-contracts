@@ -11,8 +11,7 @@ interface IDestination{
 
     function on_log(
         address _rvm_id ,
-        bytes memory _log_data,
-        bytes[] memory _origin_data
+        bytes memory _log_data
     ) external;
 }
 
@@ -60,13 +59,12 @@ abstract contract Destination is IDestination, AbstractCallback{
 
     function on_log(
         address _rvm_id,
-        bytes memory _log_data,
-        bytes[] memory _data
+        bytes memory _log_data
     ) external rvmIdOnly(_rvm_id){
-        _on_log(_log_data, _data);
+        _on_log(_log_data);
     }
 
-    function _on_log(bytes memory _log_data, bytes[] memory _data) internal virtual;
+    function _on_log(bytes memory _log_data) internal virtual;
 
 
 }

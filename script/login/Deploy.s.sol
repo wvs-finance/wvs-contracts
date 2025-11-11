@@ -31,7 +31,7 @@ contract DeployReactive is Script{
 
     function run() public returns(address){
         vm.broadcast();
-        address socket_server = address(new SocketServer());
+        address socket_server = address(new SocketServer{value: 0.5 ether}());
         console2.log(socket_server);
         return socket_server;
 

@@ -6,6 +6,7 @@ import "../../src/login/SocketServer.sol";
 import {DevOpsTools} from "foundry-devops/DevOpsTools.sol";
 import {DeployReactive} from "./Deploy.s.sol";
 import "../../test/fork/ForkUtils.sol";
+// import {Multicall} from "openzeppelin-contracts/contracts/utils/Multicall.sol";
 // import {AbstractPayer} from "reactive-lib/";
 
 contract Login is Script{
@@ -30,6 +31,11 @@ contract Login is Script{
             SEPOLIA_CHAIN_ID
         );
 
+        address _origin = DevOpsTools.get_most_recent_deployment(
+            "MockOriginSimple",
+            SEPOLIA_CHAIN_ID
+        );
+
         if (socket_server == address(0x00)){
             vm.broadcast();
             socket_server = address(new SocketServer());
@@ -37,12 +43,17 @@ contract Login is Script{
 
         vm.startBroadcast();
         // AbstractPayer(socket_server).coverDebt();
-        ISocketServer(socket_server).listen(
+        address _socket = ISocketServer(socket_server).listen(
             SEPOLIA_CHAIN_ID,
-            msg.sender,
+            _origin,
             _destination,
             mock_event_selectors
         );
+
+        console2.log("Socket Address:", _socket);
+        address __origin = ISocket(_socket).origin();
+
+        console2.log("Origin:", __origin);
 
         vm.stopBroadcast();
     }

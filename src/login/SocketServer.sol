@@ -19,7 +19,7 @@ interface ISocketServer{
         address  _destination,
         bytes4[] calldata _event_selectors
         // bytes[] calldata _arbitrary_data
-    ) external returns(address);
+    ) external payable returns(address);
 
     function chains(address _user) external returns(uint256[] memory);
     function endpoints(uint256 _chain_id) external returns(Endpoint memory);
@@ -79,16 +79,16 @@ contract SocketServer is ISocketServer, AbstractPayer{
         return $.sockets[_user][_chain_id];
     }
 
-
+    constructor() payable AbstractPayer() {}
 
 
     function listen(
         uint256 _chain_id,
-        address _target,        
+        address _origin,        
         address _destination,
         bytes4[] calldata _event_selectors
         // bytes[] calldata _arbitrary_data
-    ) external returns(address){
+    ) external payable returns(address){
 
         // if (
         //     _event_selectors.length != _arbitrary_data.length
@@ -105,7 +105,10 @@ contract SocketServer is ISocketServer, AbstractPayer{
         }
  
         $.endpoints[_chain_id] = endpoint;
-        address _chain_socket = _deploy_socket(_chain_id,_target,endpoint,_destination);
+        $.origins[_chain_id] = _origin;
+        address _chain_socket = _deploy_socket(_chain_id,msg.sender,endpoint,_destination);
+
+        $.sockets[msg.sender][_chain_id] = _chain_socket; 
         
         
         // this.coverDebt();
@@ -115,16 +118,12 @@ contract SocketServer is ISocketServer, AbstractPayer{
 
     function _deploy_socket(
         uint256 _chain_id,
-        address _target,
+        address _user_address,
         Endpoint memory _endpoint,
         address _destination
     ) internal returns(address _socket){
-        _socket = sockets(_target, _chain_id) != address(0x00) ? sockets(_target, _chain_id) : address(
-                new Socket(
-                    _chain_id,
-                    origins(_chain_id),
-                    _endpoint,
-                    _destination
+        _socket = sockets(_user_address, _chain_id) != address(0x00) ? sockets(_user_address, _chain_id) : address(
+                new Socket{value : 0.3 ether}(
                 )
             );
     }

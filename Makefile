@@ -39,3 +39,6 @@ pay-destination:
 
 login:
 	forge script script/login/Login.s.sol:Login --broadcast --sig "login()" --private-key $(PRIVATE_KEY) --rpc-url $(LASNA_RPC_ENDPOINT)
+
+query-socket:
+	cast call --rpc-url $(LASNA_RPC_ENDPOINT)  --private-key $(PRIVATE_KEY) $(SOCKET_SERVER) "sockets(address,uint256)" $(USER_ADDRESS) $(SEPOLIA_CHAIN_ID)

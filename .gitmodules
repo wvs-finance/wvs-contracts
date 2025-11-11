@@ -37,3 +37,6 @@
 [submodule "lib/foundry-devops"]
 	path = lib/foundry-devops
 	url = https://github.com/Cyfrin/foundry-devops
+[submodule "lib/system-smart-contracts"]
+	path = lib/system-smart-contracts
+	url = https://github.com/Reactive-Network/system-smart-contracts

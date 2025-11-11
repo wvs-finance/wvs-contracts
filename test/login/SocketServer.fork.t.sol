@@ -4,32 +4,31 @@ pragma solidity ^0.8.26;
 import "../ForkTest.sol";
 import "./utils/MockDestinationSimple.sol";
 import "./utils/MockOriginSimple.sol";
-import "../../src/login/SocketServer.sol";
+import "../../src/login/Socket.sol";
 
-contract SocketSeverForkTest is ForkTest{
+contract SocketForkTest is ForkTest{
 
-    bytes4[] mock_origin_event_selectors = new bytes4[](uint256(0x01));
-    bytes[] empty_data = new bytes[](uint256(0x00));
+
 
     address origin;
     address destination;
 
 
-
-
+    address socket;
+    bytes32 mock_origin_event_selector;
 
     function setUp() public override{
         super.setUp();
 
 
-        bytes4 mock_origin_event_selector = bytes4(keccak256("Stimulus(uint256 indexed)"));
-        mock_origin_event_selectors[0x00] = mock_origin_event_selector;
-        
+        mock_origin_event_selector = keccak256("Stimulus(uint256 indexed)");
         bytes32 _reactive_salt = pre_deploy_reactive(user);
-        socket_server = address(new SocketServer{salt: _reactive_salt}());
-        vm.makePersistent(socket_server, SYSTEM_CONTRACT);
+        vm.startPrank(user);
+        socket = address(new Socket{salt: _reactive_salt, value: 0.5 ether}());
+        vm.stopPrank();
+        vm.makePersistent(socket, SYSTEM_CONTRACT, NODE);
         
-        pre_deploy_unichain(user);
+
         (bytes32 _unichain_salt_origin, bytes32 _unichain_salt_destination) = pre_deploy_unichain(user);
 
         origin = address(new MockOriginSimple{salt: _unichain_salt_origin}());
@@ -37,21 +36,27 @@ contract SocketSeverForkTest is ForkTest{
         vm.makePersistent(origin, destination);
     }
 
-    function test__fork__socketServerListen() external{
+    function test__fork__socketInit() external{
         vm.selectFork(reactive_fork);
+        vm.deal(user, 1 ether);
         vm.startPrank(user);
-        address _socket = ISocketServer(socket_server).listen(
-            UNICHAIN_CHAIN_ID,
-            user,
-            destination,
-            mock_origin_event_selectors
-            // empty_data
-        );
         
-        IMockOriginSimple(origin).stimulus();
-        console2.log(IMockOriginSimple(origin).state());    
+        ISocket(socket).__init__{value: 1 ether}(
+            UNICHAIN_CHAIN_ID,
+            origin,
+            destination
+        );
+
+
         vm.stopPrank();
-        vm.makePersistent(_socket);
+
+        vm.prank(SYSTEM_CONTRACT);
+
+        ISocket(socket).subscribe(
+            user,
+            mock_origin_event_selector
+        );
+
         
    }
 
@@ -153,8 +158,8 @@ contract SocketSeverForkTest is ForkTest{
 // //         vm.selectFork(unichain_fork);
 // //         assertEq(UNICHAIN_CHAIN_ID, block.chainid);
 // //         vm.startPrank(_caller);
-// //         // IERC20(Currency.unwrap(pool_key.currency0)).approve(
 // //         //     PERMIT2,
+// //         // IERC20(Currency.unwrap(pool_key.currency0)).approve(
 // //         //     type(uint256).max
 // //         // );
 // //         // IAllowanceTransfer(PERMIT2).approve(
