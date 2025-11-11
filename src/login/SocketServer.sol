@@ -107,7 +107,8 @@ contract SocketServer is ISocketServer, AbstractPayer{
         $.endpoints[_chain_id] = endpoint;
         address _chain_socket = _deploy_socket(_chain_id,_target,endpoint,_destination);
         
-        this.coverDebt();
+        
+        // this.coverDebt();
         return _chain_socket;
        
     }
