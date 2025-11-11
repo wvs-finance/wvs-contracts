@@ -41,3 +41,4 @@ v4-periphery/=lib/v4-periphery/
 vixdex/=lib/vixdex/
 @uniswap/v4-core/=lib/v4-periphery/lib/v4-core/
 @uniswap/v4-periphery/=lib/v4-periphery/
+foundry-devops/=lib/foundry-devops/src/

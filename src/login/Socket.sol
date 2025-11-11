@@ -1,30 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.26;
 
-//   - The Socket is a MinimalProxy with metadata.
-// The metadata is the tokenId
-//   - The Socket is a AsbtractPausableReactive
-//   - The Socket hears the PositionManager
-
-import {IERC721} from "forge-std/interfaces/IERC721.sol";
 import {AbstractPausableReactive} from "reactive-lib/abstract-base/AbstractPausableReactive.sol";
-import {console2} from "forge-std/console2.sol";
 import "./SocketServer.sol";
-import "./Listener.sol";
-
-// LOG0 = 0xA0 (160) — 0 topics
-// LOG1 = 0xA1 (161) — 1 topic
-// LOG2 = 0xA2 (162) — 2 topics
-// LOG3 = 0xA3 (163) — 3 topics
-// LOG4 = 0xA4 (164) — 4 topics
+import  "./types/Endpoint.sol";
 
 
 interface ISocket{
-    function subscribe(uint256 op_code, uint256[3] memory _encoded_topic_values) external;
+    function chain_id() external returns(uint256);
+    function origin() external returns(address);
+    function endpoint() external returns(Endpoint memory);
+    function destination() external returns(address);
 }
 
-
 contract Socket is ISocket, AbstractPausableReactive{
+    using EndpointLib for Endpoint;
     // NOTE: This is supposed to be param,terics but
     // from now is manual
     
@@ -34,11 +24,14 @@ contract Socket is ISocket, AbstractPausableReactive{
     */
 
    bytes32 constant STORAGE_SLOT = 0xb4fec1add9e2765bd0eb53c4053166b984884c16174fa63cd30e5d3b583154d2;
+   uint256 private constant CALLBACK_GAS_LIMIT = 1000000;
 
-
-   struct SocketStorage{
-        bytes _storage;
-   }
+    struct SocketStorage{
+        uint256 chain_id;
+        address origin;
+        Endpoint endpoint;
+        address destination;
+    }
 
     function getStorage() internal pure returns (SocketStorage storage $){
         bytes32 position = STORAGE_SLOT;
@@ -47,71 +40,106 @@ contract Socket is ISocket, AbstractPausableReactive{
         }
     }
 
-    constructor() payable AbstractPausableReactive(){
-        Port memory _port = ISocketServer(owner).port();
-        SocketSubscription memory _socket_subscription = ISocketServer(owner).socket_subscription(address(this));
-
-        bytes memory subscription_payload = abi.encodeWithSignature(
-            "subscribe(uint256,address,uint256,uint256,uint256,uint256)",
-            _port.origin_chain_id,
-            _port.endpoint,
-            uint256(bytes32(_socket_subscription.event_selector)),
-            REACTIVE_IGNORE ,
-            REACTIVE_IGNORE,
-            REACTIVE_IGNORE    
-        );
-        (bool subscription_result,) = address(service).call(subscription_payload);
-        vm = !subscription_result;
-    }
-    
-
-
-
-
-
-
-// LOG0 = 0xA0 (160) — 0 topics
-// LOG1 = 0xA1 (161) — 1 topic
-// LOG2 = 0xA2 (162) — 2 topics
-// LOG3 = 0xA3 (163) — 3 topics
-// LOG4 = 0xA4 (164) — 4 topics
-// Deployments occur both on the 
-// - Reactive Network, 
-// - Deployer's private ReactVM, 
-//      - The system contract is not present
-
-    function subscribe(uint256 op_code, uint256[3] memory _encoded_topic_values) external rnOnly {
-        vm = false;
-        Port memory _port = ISocketServer(owner).port();
-
-        SocketSubscription memory _socket_subscription = ISocketServer(owner).socket_subscription(address(this));
-        (bool subscription_result,) = address(service).call(subscription_payload);
-    
-    
-        // NOTE: Set's the the VM back on
-        vm = !subscription_result;
-    }
-
-
-
-// log.topic1 == address(0x00)
-// &&
-// (tx.origin == _subscription.target || IERC721(this.owner()).ownerOf(log.topic_3) == _subscription.target)
-// 
-
-
-    function react(LogRecord calldata log) external vmOnly(){
-
-        Port memory _port = ISocketServer(owner).port();
-        SocketSubscription memory _subscription = ISocketServer(owner).socket_subscription(address(this));
+    // TODO: This is best stored in bytecode 
+    // as eip-3448
+    constructor(
+        uint256 _chain_id,
+        address _origin,
+        Endpoint memory _endpoint,
+        address _destination  
+    ) payable AbstractPausableReactive(){
+        SocketStorage storage $ = getStorage();
         
-        if  (!(log.chain_id == _port.origin_chain_id && log._contract == _port.endpoint && bytes4(uint32(log.topic_0)) == _subscription.event_selector)) revert("Invalid Event to react");
-        // TODO: This needs to be a protgramtic condition
-        if (address(uint160(log.topic_1)) == address(0x00) && IERC721(_port.endpoint).ownerOf(log.topic_3) == _subscription.target){
-            address _listener = ISocketServer(owner).listener();
+        detectVm();
+
+        if (!vm){
+            for (
+                uint256 index; 
+                index < _endpoint.selectors.length;
+                index++
+            )
+            {   
+
+                (bool _ok, bytes memory _res) = address(service).call{value : msg.value}(
+                    abi.encodeWithSignature(
+                        "subscribe(uint256,address,uint256,uint256,uint256,uint256)",
+                        _chain_id,
+                        _origin,
+                        uint256(bytes32(_endpoint.selectors[index])),
+                        REACTIVE_IGNORE,
+                        REACTIVE_IGNORE,
+                        REACTIVE_IGNORE
+                    )
+                );
+                
+
+            }
             
         }
+        $.chain_id = _chain_id;
+        $.origin = _origin;
+        $.endpoint = _endpoint;
+        $.destination = _destination;
+    }
 
+    function chain_id() external returns(uint256){
+        SocketStorage storage $ = getStorage();
+        return $.chain_id;
+    }
+
+    function origin() external returns(address){
+        SocketStorage storage $ = getStorage();
+        return $.origin;
+    }
+
+    function endpoint() external returns(Endpoint memory){
+        SocketStorage storage $ = getStorage();
+        return $.endpoint;
+    }
+
+    function destination() external returns(address){
+        SocketStorage storage $ = getStorage();
+        return $.destination;
+    }
+    
+
+    function react(LogRecord calldata log) external vmOnly(){
+        SocketStorage storage $ = getStorage();
+        if (
+            log._contract == $.origin && log.chain_id == $.chain_id &&
+            $.endpoint.has(
+                bytes4(
+                    bytes32(
+                        log.topic_0
+                    )
+                )
+            )    
+        ){
+            bytes memory _event_data = abi.encode(
+                log.topic_1,
+                log.topic_2,
+                log.topic_3,
+                log.data
+            );
+            bytes memory _destinaton_payload = abi.encodeWithSignature(
+                "on_log(address,bytes memory, bytes[] memory)",
+                address(0x00),
+                _event_data,
+                new bytes[](uint256(0x00))
+                // $.endpoint.data
+            );
+
+            emit Callback(
+                $.chain_id,
+                $.destination,
+                uint64(CALLBACK_GAS_LIMIT),
+                _destinaton_payload
+            );
+
+    
+        }
+
+   
     }
     
 

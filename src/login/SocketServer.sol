@@ -4,49 +4,34 @@ pragma solidity ^0.8.26;
 
 import {MetaProxyFactory} from "../eip/MetaProxyFactory.sol";
 import {Create2} from "openzeppelin-contracts/contracts/utils/Create2.sol";
-// import {CREATE3} from "solady/utils/CREATE3.sol";
-import "./Listener.sol";
-// import {OwnableFacet} from 
-// import {CreateX} from ""
-// NOTE: This:
-//   - The SocketManager is a MetaProxyDeployer
-//   - The SocketManager receives the origin address and it's chain Id
-//   - The SocketManager deploys SocketContracts using createX
-//   - The SocketManager lives on the Reactive-Network
-// There is one socket server per chain
-
-struct Port{
-    uint256 origin_chain_id;
-    address endpoint;
-}
-
-struct SocketSubscription{
-    address target;
-    bytes4 event_selector;
-}
-
+import "./types/Endpoint.sol";
+import "./Socket.sol";
+// One port CAN have many origins and
+import {AbstractPayer} from "reactive-lib/abstract-base/AbstractPayer.sol";
 
 
 interface ISocketServer{
+    // NOTE: This is the entry point
+    // after logging in 
+    function listen(
+        uint256 _chain_id,
+        address _target,        
+        address  _destination,
+        bytes4[] calldata _event_selectors
+        // bytes[] calldata _arbitrary_data
+    ) external returns(address);
 
-    // This receive the msg sender, so it does not require args
-
-    function __init__(uint256 _originChainId, address _endpoint, address _listener, address _socket_implementation) external;
-    function listen(bytes4 _event_selector) external;
-    
-
-    
-    function port() external returns(Port memory _port);
-    function listener() external returns(address _listener);
-    function socket_implementation() external returns(address _socket_implementation);
-    function socket_subscription(address _socket) external returns(SocketSubscription memory _socket_subscription);
-    function get_socket() external returns(address _socket);
+    function chains(address _user) external returns(uint256[] memory);
+    function endpoints(uint256 _chain_id) external returns(Endpoint memory);
+    function origins(uint256 _chain_id) external returns(address);
+    function destinations(uint256 _chain_id) external returns(address);
+    function sockets(address _user, uint256 _chain_id) external returns(address);
 
     
 }
 
-contract SocketServer is MetaProxyFactory, ISocketServer{
-
+contract SocketServer is ISocketServer, AbstractPayer{
+    using EndpointLib for Endpoint;
     /**
      * @dev ERC-8042 compliant storage struct for ERC20 token data.
      * @custom:storage-location erc8042:wvs.socketServer
@@ -55,11 +40,11 @@ contract SocketServer is MetaProxyFactory, ISocketServer{
     bytes32 constant public STORAGE_SLOT = 0xbc6804d897d36506460df3f138d1e666ff601ba56ea4b1f000cb9237bdf814c3;
     
     struct SocketServerStorage{
-        Port port;
-        address socket_implementation;
-        address listener;
-        mapping(address publisher => address socket) sockets;
-        mapping(address socket => SocketSubscription) subscriptions;
+        mapping(address _user => uint256[] _chainids) chains;
+        mapping(address _user => mapping(uint256 _chain_id => address _socket)) sockets;
+        mapping(uint256 _chainid => Endpoint) endpoints;
+        mapping(uint256 _chainid => address _origin) origins;
+        mapping(uint256 _chainid => address _destination) destinations;
     }
 
     function getStorage() internal pure returns (SocketServerStorage storage $){
@@ -68,87 +53,79 @@ contract SocketServer is MetaProxyFactory, ISocketServer{
             $.slot := position
         }
     }
-
-    function __init__(
-        uint256 _originChainId,
-        address _endpoint,
-        address _listener,
-        address _socket_implementation
-    ) external{
+    function chains(address _user) public view returns(uint256[] memory){
         SocketServerStorage storage $ = getStorage();
-
-        $.port = Port({
-            origin_chain_id :_originChainId,
-            endpoint: _endpoint
-        });
-        
-        $.listener = _listener;
-        $.socket_implementation = _socket_implementation;
-
+        return $.chains[_user];
     }
 
-    function port() public view returns(Port memory _port){
+    function endpoints(uint256 _chain_id) public view returns(Endpoint memory){
         SocketServerStorage storage $ = getStorage();
-        _port = $.port;
+        return $.endpoints[_chain_id];
     }
 
-    function listener() public view returns(address _listener){
+    function origins(uint256 _chain_id) public view returns(address){
         SocketServerStorage storage $ = getStorage();
-        _listener = $.listener;
+        return $.origins[_chain_id];
     }
 
-    function get_socket() public view returns(address _socket){
+    
+    function destinations(uint256 _chain_id) public view returns(address){
         SocketServerStorage storage $ = getStorage();
-        _socket = $.sockets[msg.sender];
+        return $.destinations[_chain_id];
+    }
+    
+    function sockets(address _user, uint256 _chain_id) public view returns(address){
+        SocketServerStorage storage $ = getStorage();
+        return $.sockets[_user][_chain_id];
     }
 
 
-    function socket_implementation() public view returns(address _socket_implementation){
-        SocketServerStorage storage $ = getStorage();
-        _socket_implementation = $.socket_implementation;
-    }
 
-    function _deploy_socket(address _caller, bytes4 _event_selector) internal returns(address _socket){
-        SocketServerStorage storage $ = getStorage();
-        /// NOTE: This assumes the address was properly set on the firts place
-        if ($.sockets[_caller] != address(0x00)){
-            _socket = $.sockets[_caller];
+
+    function listen(
+        uint256 _chain_id,
+        address _target,        
+        address _destination,
+        bytes4[] calldata _event_selectors
+        // bytes[] calldata _arbitrary_data
+    ) external returns(address){
+
+        // if (
+        //     _event_selectors.length != _arbitrary_data.length
+
+        // ) {revert();}
+
+       SocketServerStorage storage $ = getStorage();
+       Endpoint memory endpoint = EndpointLib.__init__();
+        for (uint256 selectors_index; selectors_index < _event_selectors.length; selectors_index++){
+            endpoint = endpoint.add(
+                _event_selectors[selectors_index]
+                // _arbitrary_data[selectors_index]
+            );
         }
+ 
+        $.endpoints[_chain_id] = endpoint;
+        address _chain_socket = _deploy_socket(_chain_id,_target,endpoint,_destination);
         
-        SocketSubscription memory _socket_subscription = SocketSubscription({
-            target: _caller,
-            event_selector : _event_selector
-        });
-
-        Port memory _port = port();
-
-        bytes memory _metadata = abi.encode(_port, _socket_subscription);
-        
-        _socket = _metaProxyFromBytes(socket_implementation(), _metadata);
-        $.sockets[_caller] = _socket;
-
+        this.coverDebt();
+        return _chain_socket;
+       
     }
 
-    function listen(bytes4 _event_selector) external{
-        
-        address _socket = _deploy_socket(msg.sender, _event_selector);
-        _set_socket_subscription(_socket, msg.sender, _event_selector);
-
-    }
-
-    function _set_socket_subscription(address _socket, address _target, bytes4 _event_selector) internal{
-        SocketServerStorage storage $ = getStorage();
-        $.subscriptions[_socket] = SocketSubscription({
-            target: _target,
-            event_selector: _event_selector
-        });
-    }
-
-    function socket_subscription(address _socket) external returns(SocketSubscription memory _socket_subscription){
-        // if (msg.sender != _socket ) revert("Socket is not caller");
-        // // TODO: This is only callable by the socket
-        SocketServerStorage storage $ = getStorage();
-        _socket_subscription = $.subscriptions[_socket];
+    function _deploy_socket(
+        uint256 _chain_id,
+        address _target,
+        Endpoint memory _endpoint,
+        address _destination
+    ) internal returns(address _socket){
+        _socket = sockets(_target, _chain_id) != address(0x00) ? sockets(_target, _chain_id) : address(
+                new Socket(
+                    _chain_id,
+                    origins(_chain_id),
+                    _endpoint,
+                    _destination
+                )
+            );
     }
 
 }

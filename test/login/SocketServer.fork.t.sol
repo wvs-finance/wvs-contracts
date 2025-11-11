@@ -1,122 +1,182 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "./SocketServer.t.sol";
 import "../ForkTest.sol";
-import "../../src/PortafolioRegistry.sol";
-
+import "./utils/MockDestinationSimple.sol";
+import "./utils/MockOriginSimple.sol";
+import "../../src/login/SocketServer.sol";
 
 contract SocketSeverForkTest is ForkTest{
-    address socket_server;
-    address socket_implementation;
 
-    Port mock_port;
-    SocketSubscription mock_socket_subscription;
-    bytes4 mock_event_selector;
+    bytes4[] mock_origin_event_selectors = new bytes4[](uint256(0x01));
+    bytes[] empty_data = new bytes[](uint256(0x00));
 
-    address endpoint;
-    address listener;
+    address origin;
+    address destination;
 
-    function deploy_reactive(uint256 _pay_to_deploy) internal{
-        vm.selectFork(reactive_fork);
-        assertEq(block.chainid, REACTIVE_CHAIN_ID);
-        vm.deal(user, _pay_to_deploy);
-        
-        // Use CREATE2 with unique salt per fork to avoid CreateCollision
-        // Salt includes chain ID to ensure uniqueness across forks
-        bytes32 reactive_salt = keccak256(abi.encodePacked("reactive", REACTIVE_CHAIN_ID));
-        
-        vm.startPrank(user);
-        socket_server = address(new SocketServerHarness{salt: reactive_salt}());
-        // Use different salt for second deployment
-        bytes32 reactive_salt_impl = keccak256(abi.encodePacked("reactive-impl", REACTIVE_CHAIN_ID));
-        socket_implementation = address(new SocketHarness{salt: reactive_salt_impl}()); 
-        vm.stopPrank();
-        
-        // Make persistent after stopping prank to ensure clean state
-        vm.makePersistent(socket_server, socket_implementation);
-    }
 
-    function deploy_unichain(uint256 _pay_to_deploy) internal{
-        vm.selectFork(unichain_fork);
-        assertEq(block.chainid, UNICHAIN_CHAIN_ID);
-        vm.deal(user, _pay_to_deploy);
-        
-        // Use CREATE2 with unique salt per fork to avoid CreateCollision
-        // Salt includes chain ID to ensure uniqueness across forks
-        // Same deployer (user) but different salts = different addresses
-        bytes32 unichain_salt_endpoint = keccak256(abi.encodePacked("unichain-endpoint", UNICHAIN_CHAIN_ID));
-        bytes32 unichain_salt_listener = keccak256(abi.encodePacked("unichain-listener", UNICHAIN_CHAIN_ID));
-        
-        vm.startPrank(user);
-        endpoint = POSITION_MANAGER;
-        listener = address(new ListenerHarness{salt: unichain_salt_listener}());
-        vm.stopPrank();
-        
-        // Make persistent after stopping prank to ensure clean state
-        vm.makePersistent(endpoint, listener);
-    }
+
 
 
     function setUp() public override{
         super.setUp();
 
 
-        mock_event_selector = bytes4(keccak256("MockEvent()"));
+        bytes4 mock_origin_event_selector = bytes4(keccak256("Stimulus(uint256 indexed)"));
+        mock_origin_event_selectors[0x00] = mock_origin_event_selector;
         
-        deploy_reactive(20 ether);
-        deploy_unichain(1 ether);
+        bytes32 _reactive_salt = pre_deploy_reactive(user);
+        socket_server = address(new SocketServer{salt: _reactive_salt}());
+        vm.makePersistent(socket_server, SYSTEM_CONTRACT);
         
-        
-        mock_port = Port({
-            origin_chain_id: UNICHAIN_CHAIN_ID,
-            endpoint: endpoint
-        });
+        pre_deploy_unichain(user);
+        (bytes32 _unichain_salt_origin, bytes32 _unichain_salt_destination) = pre_deploy_unichain(user);
 
-        mock_socket_subscription = SocketSubscription({
-            target: user,
-            event_selector: mock_event_selector
-        });
-
-
-    }
-
-    function test__fork__socketInit() external{
-        vm.selectFork(reactive_fork);
-        vm.prank(user);
-
-        ISocketServer(socket_server).__init__(
-            mock_port.origin_chain_id,
-            mock_port.endpoint,
-            listener,
-            socket_implementation
-        );
-
-        bytes32 hash_port = keccak256(abi.encode(mock_port));
-        assertEq(listener, ISocketServer(socket_server).listener());
-        assertEq(hash_port,keccak256(abi.encode(ISocketServer(socket_server).port())));
+        origin = address(new MockOriginSimple{salt: _unichain_salt_origin}());
+        destination = address(new MockDestinationSimple{salt: _unichain_salt_destination}(SYSTEM_CONTRACT,origin));
+        vm.makePersistent(origin, destination);
     }
 
     function test__fork__socketServerListen() external{
         vm.selectFork(reactive_fork);
         vm.startPrank(user);
-        ISocketServer(socket_server).listen(mock_event_selector);
-        address _socket = ISocketServer(socket_server).get_socket();
-        ISocket(_socket).subscribe(
-            uint256(0xA0),
-            [uint256(0x00), uint256(0x00),uint256(0x00)]
+        address _socket = ISocketServer(socket_server).listen(
+            UNICHAIN_CHAIN_ID,
+            user,
+            destination,
+            mock_origin_event_selectors
+            // empty_data
         );
+        
+        IMockOriginSimple(origin).stimulus();
+        console2.log(IMockOriginSimple(origin).state());    
         vm.stopPrank();
-
-        vm.selectFork(unichain_fork);
-
-        vm.prank(user);
-        MockEndpoint(endpoint).emit_event();
-        // vm.expectEmit(endpoint);
-
-
-    }
-
-
+        vm.makePersistent(_socket);
+        
+   }
 
 }
+
+// //     function uniform_liquidity_amounts(
+// //         uint256 _liquidity_to_provide
+// //     ) internal returns(uint256,uint256){
+// //         (uint160 _low, uint160 _up) = (
+// //             TickMath.getSqrtPriceAtTick(
+// //                 TickMath.minUsableTick(pool_key.tickSpacing)
+// //             ),
+// //             TickMath.getSqrtPriceAtTick(
+// //                 TickMath.maxUsableTick(pool_key.tickSpacing)
+// //             )
+// //         );
+// //         (uint256 amount0_toFund, uint256 amount1_toFund) = (
+// //             SqrtPriceMath.getAmount0Delta(
+// //                 _low,
+// //                 _up,
+// //                 uint128(_liquidity_to_provide),
+// //                 true
+// //             ),
+// //             SqrtPriceMath.getAmount1Delta(
+// //                 _low,
+// //                 _up,
+// //                 uint128(_liquidity_to_provide),
+// //                 true
+// //             )
+// //         );
+// //         return (amount0_toFund, amount1_toFund);
+
+// //     }
+
+
+// //    // NOTE: This is defaulted as uniform liquidity 
+// //    function fund_liquidity(
+// //         address _caller,
+// //         uint256 _liquidity_to_provide
+// //     ) internal returns (uint256 _amount0,uint256 _amount1 ){
+
+// //         vm.selectFork(unichain_fork);
+// //         assertEq(UNICHAIN_CHAIN_ID, block.chainid);
+        
+// //         vm.startPrank(_caller);
+ 
+// //         (uint256 amount0_toFund, uint256 amount1_toFund) = uniform_liquidity_amounts(_liquidity_to_provide);
+          
+// //         IV4Quoter.QuoteExactSingleParams memory _swap_params = IV4Quoter.QuoteExactSingleParams({
+// //             poolKey: pool_key,
+// //             zeroForOne: true,
+// //             exactAmount: uint128(amount1_toFund),
+// //             hookData: Constants.ZERO_BYTES  
+// //         });
+// //         (uint256 _amountIn, uint256 _gasEstimate) = IV4Quoter(QUOTER_V4).quoteExactOutputSingle(
+// //             _swap_params
+// //         );
+// //         vm.deal(_caller, _amountIn + _gasEstimate);
+
+// //         Plan memory swap_to_usdc = Planner.init();
+      
+
+// //         bytes memory swap_command = abi.encode(
+// //             IV4Router.ExactOutputSingleParams(
+// //                 pool_key,
+// //                 true,
+// //                 uint128(amount1_toFund),
+// //                 uint128(_amountIn),
+// //                 Constants.ZERO_BYTES
+// //             )
+// //         );
+// //         swap_to_usdc = swap_to_usdc.add(
+// //             Actions.SWAP_EXACT_OUT,
+// //             swap_command
+// //         );
+
+// //         IUniversalRouter(UNIVERSAL_ROUTER).execute(
+// //             swap_to_usdc.actions,
+// //             swap_to_usdc.params,
+// //             uint256(type(uint48).max)
+// //         );
+
+// //         uint256 usdc_balance = IERC20(Currency.unwrap(pool_key.currency1)).balanceOf(_caller);
+// //         uint256 eth_balance = _caller.balance;
+        
+// //         vm.stopPrank();
+
+
+// //         assert(usdc_balance == amount1_toFund && eth_balance == amount0_toFund);
+
+
+// //         (_amount0, _amount1) = (amount0_toFund, amount1_toFund);
+
+
+
+// //    } 
+
+// //    function approve_permit2(address _caller) internal{
+// //         vm.selectFork(unichain_fork);
+// //         assertEq(UNICHAIN_CHAIN_ID, block.chainid);
+// //         vm.startPrank(_caller);
+// //         // IERC20(Currency.unwrap(pool_key.currency0)).approve(
+// //         //     PERMIT2,
+// //         //     type(uint256).max
+// //         // );
+// //         // IAllowanceTransfer(PERMIT2).approve(
+// //         //     Currency.unwrap(pool_key.currency0),
+// //         //     endpoint,
+// //         //     type(uint160).max,
+// //         //     type(uint48).max
+// //         // );
+// //         IERC20(Currency.unwrap(pool_key.currency1)).approve(
+// //             PERMIT2,
+// //             type(uint256).max
+// //         );
+// //         IAllowanceTransfer(PERMIT2).approve(
+// //             Currency.unwrap(pool_key.currency1),
+// //             endpoint,
+// //             type(uint160).max,
+// //             type(uint48).max
+// //         );
+// //         vm.stopPrank();
+        
+// //    }
+
+
+
+// }
