@@ -7,8 +7,10 @@ import {GenericFactory} from "euler-vault-kit/src/GenericFactory/GenericFactory.
 import "@uniswap/v4-periphery/src/libraries/PositionInfoLibrary.sol";
 
 interface IHedgeSubscriptionManager{
-    function __init__(address _lpm, address _generic_factory) external;
+    event Subscribed (address indexed _lp_account, uint256 indexed token_id, address indexed _lp_hedge_manager);
+    function __init__(address _lpm) external;
     function subscribe(uint256 _position_id,address _lp_account) external;
+    function set_lp_metrics_implementation(address _new_implementation) external;
     function lpm() external returns(address);
     function metrics_factory() external returns(address);
 }
@@ -32,10 +34,10 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
         }
     }
 
-    function __init__(address _lpm, address _generic_factory) external{
+    function __init__(address _lpm) external{
         HedgeSubscriptionManagerStorage storage $ = getStorage();
         $.lpm = _lpm;
-        $.lp_metrics_factory = _generic_factory;
+        $.lp_metrics_factory = address(new GenericFactory(address(this)));
     }
 
 
@@ -46,7 +48,7 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
 
     function metrics_factory() public view returns(address){
         HedgeSubscriptionManagerStorage storage $ = getStorage();
-        $.lp_metrics_factory;
+        return $.lp_metrics_factory;
     }
 
 
@@ -55,13 +57,14 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
     }
 
 
+    
 
     // TODO: This requires approval
     function subscribe(uint256 _token_id, address _lp_account) external{
         address _lp_hedge_manager = GenericFactory(metrics_factory()).createProxy(
             GenericFactory(metrics_factory()).implementation(),
             false,
-            abi.encode(_lp_account)
+            bytes("")
         );
         (PoolKey memory _pool_key, PositionInfo _position_info) = IPositionManager(
             lpm()
@@ -77,9 +80,12 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
                 _pool_key,
                 _position_info,
                 _position_liquidity,
+                _lp_account,
                 address(IPositionManager(lpm()).poolManager())
             )
         );
+
+        emit Subscribed(_lp_account, _token_id, _lp_hedge_manager);
 
     }
 

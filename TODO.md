@@ -27,15 +27,18 @@ $$
 - $H_i$ is a `HedgeAggregator`
 - $H_i$ is a Diamond which facets are the services it offers to each $j(i)$
 
-## $H_i.\text{subscription} -> H_i.\text{metrics}$
-- This is the interfaction between two facets $H_i.\text{metrics}$ leverages
-```solidity
+====1. Metrics Cycle (offered to every hedge)
 
-contract HedgeAggregator is Diamond{
-  // immutables
-  function 
-}
+- Once deployed the front can query 
+
+```solidity
+event MetricsData(uint256 indexed_token_id, uint80 indexed, bytes _data)
 ```
+
+
+
+- The login service passses the tokenid of teh position and it's owner to the Facet  in charge of subscribing the user to the positions
+
 
 ======== Integration with VIX
 - I am an LP and already have a position on a Uniswap V3 Pair. I want to use variance swaps to hedge mmy position dynamically

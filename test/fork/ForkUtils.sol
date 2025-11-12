@@ -12,11 +12,13 @@ pragma solidity ^0.8.17;
 ////==================================UNICHAIN========================================
 uint256 constant UNICHAIN_CHAIN_ID = 130;
 uint256 constant ETHER_AMOUNT_TO_DEPLOY = 1 ether;
+bytes32 constant ETH_USDC_5BPS = bytes32(0x3258f413c7a88cda2fa8709a589d221a80f6574f63df5a5b6774485d8acc39d9);
 address constant UNIVERSAL_ROUTER = address(0xEf740bf23aCaE26f6492B10de645D6B98dC8Eaf3);
 address constant QUOTER_V4 = address(0x333E3C607B141b18fF6de9f258db6e77fE7491E0);
 address constant POSITION_MANAGER = address(0x4529A01c7A0410167c5740C487A8DE60232617bf);
 address constant PERMIT2 = address(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 address constant UNICHAIN_CALLBACK_PROXY_ADDRESS = address(0x9299472A6399Fd1027ebF067571Eb3e3D7837FC4);
+address constant USDC_WHALE = address(0x5752e57DcfA070e3822d69498185B706c293C792);
 address constant USDC = address(0x078D782b760474a361dDA0AF3839290b0EF57AD6);
 address constant ETH = address(0x00);
 

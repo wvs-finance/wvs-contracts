@@ -8,21 +8,23 @@ import "@uniswap/v4-core/src/types/BalanceDelta.sol";
 import {PoolIdLibrary} from "@uniswap/v4-core/src/types/PoolId.sol";
 
 import "./types/Metrics.sol";
-
+import {IComponent} from "euler-vault-kit/src/GenericFactory/GenericFactory.sol";
 
 interface IHedgeLPMetrics{
+    event MetricsData(uint256 indexed_token_id, uint80 indexed, bytes _data);
     function get_metrics(uint80) external returns(bytes memory);
-    
+    function factory() external returns(address);
 }
 // NOTE: token id gives metrics
 
-contract HedgeLPMetrics is ISubscriber, IHedgeLPMetrics{
+contract HedgeLPMetrics is ISubscriber, IHedgeLPMetrics, IComponent{
     using StateLibrary for IPoolManager;
     using PositionInfoLibrary for PositionInfo;
 
     bytes32 constant HEDGE_METRICS_POSITION = keccak256("wvs.hedging.lp-metrics");
 
     struct HedgeLPMetricsStorage{
+        address factory;
         mapping(uint80 time_key => bytes _metrics) lp_metrics;
     }
 
@@ -38,7 +40,15 @@ contract HedgeLPMetrics is ISubscriber, IHedgeLPMetrics{
         return $.lp_metrics[_time_key];
     }
 
+    function factory() public view returns(address){
+        HedgeLPMetricsStorage storage $ = getStorage();
+        return $.factory;
+    }
 
+    function initialize(address creator) external{
+        HedgeLPMetricsStorage storage $ = getStorage();
+        $.factory = creator;
+    }
 
     /// @notice Called when a position subscribes to this subscriber contract
     /// @param tokenId the token ID of the position
@@ -51,10 +61,11 @@ contract HedgeLPMetrics is ISubscriber, IHedgeLPMetrics{
             PoolKey memory _pool_key,
             PositionInfo _position_info,
             uint128 _position_liquidity,
+            address _lp_account,
             address _pool_manager
         ) = abi.decode(
             data,
-            (PoolKey, PositionInfo, uint128,address)
+            (PoolKey, PositionInfo, uint128, address, address)
         );
 
         PoolId pool_id = PoolIdLibrary.toId(_pool_key);
@@ -87,7 +98,7 @@ contract HedgeLPMetrics is ISubscriber, IHedgeLPMetrics{
         );
         uint80 _time_key = PackedTimeDataLib.build(uint48(block.timestamp),uint32(block.number));
         // uint160 _external_price_X96 = 
-        $.lp_metrics[_time_key] = abi.encode(
+        bytes memory _metrics_data =abi.encode(
             _position_liquidity,
             position_feeGrowthInside0LastX128,
             position_feeGrowthInside1LastX128,
@@ -99,7 +110,10 @@ contract HedgeLPMetrics is ISubscriber, IHedgeLPMetrics{
             current_tick_liquidityNet,
             current_tick_feeGrowthOutside0X128,
             current_tick_feeGrowthOutside1X128
-        );
+        ); 
+        $.lp_metrics[_time_key] = _metrics_data;
+
+        emit MetricsData(tokenId, _time_key, _metrics_data);
 
 
         // // NOTE: Volatility metrics
