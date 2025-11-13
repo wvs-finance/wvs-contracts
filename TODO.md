@@ -34,6 +34,8 @@ $$
 ```solidity
 event MetricsData(uint256 indexed_token_id, uint80 indexed, bytes _data)
 ```
+- This shows  the metrics needed for decision making on
+managing derivatives.
 
 
 

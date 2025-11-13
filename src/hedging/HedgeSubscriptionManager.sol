@@ -3,16 +3,17 @@ pragma solidity ^0.8.24;
 
 import {IPositionManager} from "@uniswap/v4-periphery/src/interfaces/IPositionManager.sol";
 import {INotifier} from "@uniswap/v4-periphery/src/interfaces/INotifier.sol";
-import {GenericFactory} from "euler-vault-kit/src/GenericFactory/GenericFactory.sol";
+import {GenericFactory, IComponent} from "euler-vault-kit/src/GenericFactory/GenericFactory.sol";
 import "@uniswap/v4-periphery/src/libraries/PositionInfoLibrary.sol";
 
 interface IHedgeSubscriptionManager{
-    event Subscribed (address indexed _lp_account, uint256 indexed token_id, address indexed _lp_hedge_manager);
+    event Subscribed (address indexed _lp_account, uint256 indexed token_id, address indexed _lp_position_lens);
     function __init__(address _lpm) external;
     function subscribe(uint256 _position_id,address _lp_account) external;
     function set_lp_metrics_implementation(address _new_implementation) external;
     function lpm() external returns(address);
     function metrics_factory() external returns(address);
+    function position_metrics_lens(uint256 _token_id) external returns(address);
 }
 
 contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
@@ -23,6 +24,7 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
     struct HedgeSubscriptionManagerStorage{
         address lpm;
         address lp_metrics_factory;
+        mapping(uint256 token_id => address lp_metrics) position_metrics_lens;
     }
 
   
@@ -46,6 +48,11 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
         return $.lpm;
     }
 
+    function position_metrics_lens(uint256 _token_id) public view returns(address){
+        HedgeSubscriptionManagerStorage storage $ = getStorage();
+        return $.position_metrics_lens[_token_id];
+    }
+
     function metrics_factory() public view returns(address){
         HedgeSubscriptionManagerStorage storage $ = getStorage();
         return $.lp_metrics_factory;
@@ -56,16 +63,24 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
         GenericFactory(metrics_factory()).setImplementation(_new_implementation);
     }
 
+    // TODO: 
+    //- THis requires approval
+    //- THis call only be called once per position_token life cycle
+    // - The msg.sender needs to be the Destination contract and only after a 
+    // on_log call
+    // - After protected it can not subscribe twice to the same position if position
+    // is live
 
-    
-
-    // TODO: This requires approval
     function subscribe(uint256 _token_id, address _lp_account) external{
-        address _lp_hedge_manager = GenericFactory(metrics_factory()).createProxy(
+        HedgeSubscriptionManagerStorage storage $ = getStorage();
+
+        address _lp_metrics_lens = GenericFactory(metrics_factory()).createProxy(
             GenericFactory(metrics_factory()).implementation(),
             false,
             bytes("")
         );
+
+
         (PoolKey memory _pool_key, PositionInfo _position_info) = IPositionManager(
             lpm()
         ).getPoolAndPositionInfo(_token_id);
@@ -75,7 +90,7 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
 
         INotifier(lpm()).subscribe(
             _token_id,
-            _lp_hedge_manager,
+            _lp_metrics_lens,
             abi.encode(
                 _pool_key,
                 _position_info,
@@ -84,8 +99,11 @@ contract HedgeSubscriptionManager is IHedgeSubscriptionManager{
                 address(IPositionManager(lpm()).poolManager())
             )
         );
+        $.position_metrics_lens[_token_id] = _lp_metrics_lens;
+        IComponent(_lp_metrics_lens).initialize(address(this));
 
-        emit Subscribed(_lp_account, _token_id, _lp_hedge_manager);
+
+        emit Subscribed(_lp_account, _token_id, _lp_metrics_lens);
 
     }
 
