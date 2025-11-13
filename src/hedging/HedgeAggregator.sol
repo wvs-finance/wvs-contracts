@@ -9,21 +9,21 @@ import {IHedgeSubscriptionManager} from "./HedgeSubscriptionManager.sol";
 // TODO: This also needs to interact with the DiamondLoupeFacet
 
 interface IHedgeAggregator{
-
-    function diamond_loupe() external returns(address);
-    function diamond_cut() external returns(address);
-
-    // function set_hedge_subscription_manager(address) external;
+    // function __init__(address _owner) external;
+    function set_hedge_subscription_manager(address) external;
 }
-contract HedgeAggregator is IHedgeAggregator{
+
+
+contract HedgeAggregator is DiamondCutFacet, IHedgeAggregator{
     error FunctionNotFound(bytes4 selector);
 
     bytes32 constant HEDGE_AGGREGATOR_STORAGE_POSITION = keccak256("wvs.hedge-aggregator");
 
     struct HedgeAggregatorStorage{
-        address diamond_loupe;
-        address diamond_cut;
+        uint256 storage_value;
     }
+
+
 
     function getStorage() internal pure returns (HedgeAggregatorStorage storage s) {
         bytes32 position = HEDGE_AGGREGATOR_STORAGE_POSITION;
@@ -31,29 +31,35 @@ contract HedgeAggregator is IHedgeAggregator{
             s.slot := position
         }
     }
+    function set_hedge_subscription_manager(address _impl) external{
+        OwnerStorage storage $ = getOwnerStorage();
+        $.owner = address(this);
 
-    function diamond_cut() public view returns(address){
-        HedgeAggregatorStorage storage $ = getStorage();
-        return $.diamond_cut;
+        bytes4[] memory  _interface = new bytes4[](uint256(0x06));
+
+        _interface[0x00] = IHedgeSubscriptionManager.__init__.selector;
+        _interface[0x01] = IHedgeSubscriptionManager.subscribe.selector;
+        _interface[0x02] = IHedgeSubscriptionManager.metrics_factory.selector;
+        _interface[0x03] = IHedgeSubscriptionManager.set_lp_metrics_implementation.selector;
+        _interface[0x04] = IHedgeSubscriptionManager.lpm.selector;
+        _interface[0x05] = IHedgeSubscriptionManager.position_metrics_lens.selector;
+
+        DiamondCutFacet.FacetCut[] memory _cut = new DiamondCutFacet.FacetCut[](uint256(0x01));
+        _cut[0x00] = DiamondCutFacet.FacetCut(_impl, DiamondCutFacet.FacetCutAction.Add, _interface);
+        this.diamondCut(_cut, address(0x00), abi.encode("0x00"));
     }
 
-    function diamond_loupe() public view returns(address){
-        HedgeAggregatorStorage storage $ = getStorage();
-        return $.diamond_loupe;
-    }
+    
+    
 
 
 
     constructor(
         // address _owner,
-        address _diamond_loupe,
-        address _diamond_cut    
+
     )
     {   
-        HedgeAggregatorStorage storage $ = getStorage();
-        $.diamond_cut = _diamond_cut;
-        $.diamond_loupe = _diamond_loupe;
-        // DiamondCutFacet.OwnerStorage storage o$= DiamondCutFacet($.diamond_cut).getOwnerStorage();
+        // HedgeAggregatorStorage storage $ = getStorage();        // DiamondCutFacet.OwnerStorage storage o$= DiamondCutFacet($.diamond_cut).getOwnerStorage();
         // o$.owner = _owner;
     }
 
