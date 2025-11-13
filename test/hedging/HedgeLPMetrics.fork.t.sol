@@ -23,7 +23,7 @@ contract HedgeLPSubscriptionManagerForkTest is ForkTest{
     address admin;
 
 
-    function setUp() public override{
+    function setUp() public override virtual{
         super.setUp();
         vm.selectFork(unichain_fork);
         
@@ -43,7 +43,7 @@ contract HedgeLPSubscriptionManagerForkTest is ForkTest{
         vm.stopPrank();
     }
 
-    function test__fork__subscriptionManagerInit() public{
+    function test__fork__subscriptionManagerInit() public {
         IHedgeSubscriptionManager(hedge_subscription_manager).__init__(POSITION_MANAGER);
         assertEq(IHedgeSubscriptionManager(hedge_subscription_manager).lpm(), POSITION_MANAGER);
         address _lp_metrics_factory = IHedgeSubscriptionManager(hedge_subscription_manager).metrics_factory();
@@ -58,10 +58,10 @@ contract HedgeLPSubscriptionManagerForkTest is ForkTest{
 
 
 
-    function test__fork__mustSubscribeHedgeMetricsSuccess() external{
-        vm.selectFork(unichain_fork);
-        __init__();
 
+    function test__fork__mustSubscribeHedgeMetricsSuccess() public returns(address _lp_account, uint256 _token_id){
+        vm.selectFork(unichain_fork);
+        test__fork__subscriptionManagerInit();
         
         vm.startPrank(USDC_WHALE);
         
@@ -80,14 +80,10 @@ contract HedgeLPSubscriptionManagerForkTest is ForkTest{
         assertEq(hedge_subscription_manager,IHedgeLPMetrics(_position_lens).factory());
 
         vm.stopPrank();
+        (_lp_account, _token_id) = (USDC_WHALE, _position_token_id);
 
      }   
 
-    function __init__() internal{
-        IHedgeSubscriptionManager(hedge_subscription_manager).__init__(POSITION_MANAGER);
-        IHedgeSubscriptionManager(hedge_subscription_manager).set_lp_metrics_implementation(hedge_lp_metrics_impl);
-        
-    }
 
 
     function mint_liquidity_default(address _minter) internal returns(uint256 _tokenId){
