@@ -44,3 +44,7 @@
 	path = lib/Subscription
 	url = https://github.com/wvs-finance/wvs-contracts.git
 	branch = feat/Subscription
+[submodule "lib/hedging"]
+	path = lib/hedging
+	url = https://github.com/wvs-finance/wvs-contracts.git
+	branch = feat/hedging

@@ -5,5 +5,5 @@ alwaysApply: false
 The flow is to :-
 - create a PR from the changed files with minimal descriptions on waht has been done and then merge it to the working directory
 
-The PR should merge to feat/hedging branch, not main. Please update the PR base branch to feat/hedging and merge it there.
+The PR should merge to feat/hedge-minting branch, not main. Please update the PR base branch to feat/hedge-minting and merge it there.
 
