@@ -26,6 +26,12 @@
       "rev": "efff097a87e70c3d15661c9f2a2daeae0b33d5d5"
     }
   },
+  "lib/hedging": {
+    "branch": {
+      "name": "feat/hedging",
+      "rev": "eb087d46f5af767b94b7a08f43037232570974e0"
+    }
+  },
   "lib/limit-order-protocol": {
     "tag": {
       "name": "4.3.2",
@@ -43,6 +49,9 @@
       "name": "v0.1.26",
       "rev": "acd959aa4bd04720d640bf4e6a5c71037510cc4b"
     }
+  },
+  "lib/system-smart-contracts": {
+    "rev": "315e7350acb97b8425d3cfbd2eb6a93a7bf599b7"
   },
   "lib/universal-router": {
     "rev": "e1848a7a33b0b80f92460dacdf9491434351fefe"
