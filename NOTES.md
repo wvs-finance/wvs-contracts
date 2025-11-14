@@ -1,49 +1,95 @@
-Has Compose handle extensions, How it does it ?
 
-- These are extensions of the token interface itself and not entities interacting with the token as receivers or issuers $T_t$
+# VIX $\hat{\sigma}$
+- estimates the risk measurement of underlyings 
 
-ERC20 --> time-extension [ERC-7818](https://eip.tools/eip/7818)
+- informs of market status of underlying
 
-ERC721 --> time-extension [ERC-5007](http://eip.tools/eip/5007)
+- hedges against volatility or lack thereof
+
+- calculated from underlyings option prices
+- calculated using __Black-Scholes option pricing model__
+
+- tracks the 30-day __implied volatility__ of underlyings
+- operates on a scale from 0 to 200
 
 
-Then::
-$$
-T_t.\text{interface} ---mint/transfer(id: i, at: t, to: j)---> \big (T_{ijt}.\text{interface} \big)
-$$
 
-- These are extensions for entities $j$ that interact with the token $i$ as issuers or recievers all related with time operations $t$, $T_{ijt}$
+## Calculation
 
-- These entities define roles for proposing, canceling, and executing operations constrained by time $t$
+- uses the __Black-Scholes option pricing model__
+- integrates the __implied volatility__ derived from underlyings option prices
+- incorporates the market's projections of future volatility.
+- efficient subject to a robust options exchange ecosystem
+- uses adapters on oracles from underlyinngs for deriving their option prices
+- aggregates option prices from adapters to form a singular, consolidated __option price index__.
+- broadcasts __option price index__ on-chain
 
-- Timelock best used as minimal proxy
+### Option Price Index
+- is accessible for smart contracts
+- is used for:
+    - settling derivatives contracts
+    - adjust trading strategies based on real-time volatility metrics
+
+
+### Implied Volaitlity
+
+## Trading
+
+- allows traders $\Pi (\overbrace{\sigma}^{+}), \underbrace{\partial_P \Pi = 0}_{\text{agnostic to price direction}}$
+
+## Market -> AMM
+
+- is the liquidity provider of volatility
+- sells volatility according to the index value
+
+
+## $(vX/ (Y/X))$
+> Hedged Theta Vault
+- trading fees are given in Y to LP's
+
+- mitigates the one-sided exposure risk that is commonly associated with liquidity pools in DeFi platforms.
+
 
 ```
-                                  (execution) 
-( Timelock OR TimeLockController ) -----------> ERC7821 
-    (on-behalf)
------------------> Receiver
+                                                                        AMM
+                                     ------adds/removes liquidity --> ( $/X ) 
+                                    /
+user -- deposit/withdraw X ---> Vault(X) --------- (liquidity share token)     
+    \                                             \-------d ($/X)-------------> (vX/($/X))
+     ----> mints/burns vX ---------------d(vX) ---------------------->     
 ```
+## LP Revenue
+### Trading Fees $\phi^{\Delta}$
+- is transaction based revenue
 
-- A special case of time-controlled operations on tokens that are external $T_{ijt}$ is token approvals; the entity defines approval with a deadline using permit on ERC2616.
+$$
+\partial_{\phi^{\Delta}} Y = \int_{\Delta} \phi^{\Theta} ( \Delta)
+$$ 
+
+- compensate LP's for creating markets
+
+### Funding Fees $\phi^{\Theta}$
+- time-based revenue:
+$$
+\partial_{\phi^{\Theta}} Y = \int_{t_0}^{T} \phi^{\Theta} (t)
+$$ 
+- compensate LP'S for taking opposite positions
+
+## Volatility Token
+
+For token $X$ defines $vX$ such that:
+
+### Design Goals
+- hedge and delta exposure to $\hat{\sigma}$
+    - $P_{\$/{vX}} \big ( \hat{\sigma} \big)$
+- account for time decay, while keeping semantic meaning for token price
+    - $\partial_t \,P_{\$/{vX}} $
+
+
+- user can also swap vX against $, since vX is fungible
 
 
 
-## DeFi State of Art
-================TODO
-How derivative DeFi contracts are handling time related architectures for maturity and other related events ?
 
-What are some common patterns and EIP's used
 
-### Common Patterns
 
-- Pendle : PendleYieldToken --> IOptionToken --> expirationDate()--> PostExpiryData
-
-- 1Innch : limit-order-protocol --> MakerTraits --> bitmask(expirationDate)
-
-### Settlement Patterns
-
-1. **Automatic Settlement**: Triggered on first post-expiry interaction
-2. **Manual Settlement**: Requires explicit call to `setPostExpiryData()`
-3. **Treasury Collection**: Post-expiry rewards/interests go to treasury
-4. **User Claims**: Users can redeem expired positions with different logic
