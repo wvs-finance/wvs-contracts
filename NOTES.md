@@ -1,95 +1,58 @@
+# Theory
 
-# VIX $\hat{\sigma}$
-- estimates the risk measurement of underlyings 
+# Implementations
 
-- informs of market status of underlying
+- need to be collaterized on $X$
+    - swapable to $oX$
+- has a redemption token $rX$
+- has a option token $oX$
+```
+                             /--> (rX/x) ----mint: rX (X) --> 
+user ---deposit(X)--> AMM --
+                             \--> (oX/x)-----mint: oX (X) -->
+   ----------------ox----------------
+  |  - underlying         (X)             |          
+  |  - consideration      (Y)             |
+  |  - strike           (P_{Y/X}_T) = Y/X |              
+  |  - expiration           T             |
+  |  - isPut                              |
+  | ______________________________________
+```
+- __underlying:__: user has the right to purchase
+- __consideration:__: payment method for the underlying purchase
+- __expiration:___: last date the option can be excercised
+- __strike__: price for excersicing the option 
 
-- hedges against volatility or lack thereof
-
-- calculated from underlyings option prices
-- calculated using __Black-Scholes option pricing model__
-
-- tracks the 30-day __implied volatility__ of underlyings
-- operates on a scale from 0 to 200
-
-
-
-## Calculation
-
-- uses the __Black-Scholes option pricing model__
-- integrates the __implied volatility__ derived from underlyings option prices
-- incorporates the market's projections of future volatility.
-- efficient subject to a robust options exchange ecosystem
-- uses adapters on oracles from underlyinngs for deriving their option prices
-- aggregates option prices from adapters to form a singular, consolidated __option price index__.
-- broadcasts __option price index__ on-chain
-
-### Option Price Index
-- is accessible for smart contracts
-- is used for:
-    - settling derivatives contracts
-    - adjust trading strategies based on real-time volatility metrics
-
-
-### Implied Volaitlity
-
-## Trading
-
-- allows traders $\Pi (\overbrace{\sigma}^{+}), \underbrace{\partial_P \Pi = 0}_{\text{agnostic to price direction}}$
-
-## Market -> AMM
-
-- is the liquidity provider of volatility
-- sells volatility according to the index value
-
-
-## $(vX/ (Y/X))$
-> Hedged Theta Vault
-- trading fees are given in Y to LP's
-
-- mitigates the one-sided exposure risk that is commonly associated with liquidity pools in DeFi platforms.
-
+## Option Token ($oX$)
+- represents the long position of the __option holder__ 
 
 ```
-                                                                        AMM
-                                     ------adds/removes liquidity --> ( $/X ) 
-                                    /
-user -- deposit/withdraw X ---> Vault(X) --------- (liquidity share token)     
-    \                                             \-------d ($/X)-------------> (vX/($/X))
-     ----> mints/burns vX ---------------d(vX) ---------------------->     
+---------------ox----------
+
+- [rx.balance(msg.sender) > 0 ^ IoX(oX).expiration > block.timestamp]IoX(oX).exercise()
+    - swap(Y/X, P_{Y/X})
 ```
-## LP Revenue
-### Trading Fees $\phi^{\Delta}$
-- is transaction based revenue
 
-$$
-\partial_{\phi^{\Delta}} Y = \int_{\Delta} \phi^{\Theta} ( \Delta)
-$$ 
+## Redemption Token ($rX$)
 
-- compensate LP's for creating markets
+- represents the SHORT position of the __option writer__
+- locks underlying collateral (deposits)
 
-### Funding Fees $\phi^{\Theta}$
-- time-based revenue:
-$$
-\partial_{\phi^{\Theta}} Y = \int_{t_0}^{T} \phi^{\Theta} (t)
-$$ 
-- compensate LP'S for taking opposite positions
+## Option Writer (seller)
 
-## Volatility Token
-
-For token $X$ defines $vX$ such that:
-
-### Design Goals
-- hedge and delta exposure to $\hat{\sigma}$
-    - $P_{\$/{vX}} \big ( \hat{\sigma} \big)$
-- account for time decay, while keeping semantic meaning for token price
-    - $\partial_t \,P_{\$/{vX}} $
+- obligated to SELL the underlying collateral $X$ when __option owner__ calls `option.exercise`
+- can redeem consideration $Y$ prior to expiration
+- can redeem collateral $X$ post-expiration
 
 
-- user can also swap vX against $, since vX is fungible
+## Option Owner (buyer)
+
+- entitled to BUY the underlying $X$ when calling `option.exercise`
 
 
+## Riddles
 
+- In the future, there may be a way to automatically determine if a pair is considered a Put
+ or Call, but a puzzle to the reader...
 
-
-
+- burn expired tokens so they aren’t used for scams.
