@@ -1,3 +1,7 @@
+=======
+
+Current
+
 - Assuming the login is successful anD the reactive contracts are tracking the mint position evenmnt for the LP address and also the portafolioRegistry is subscribed to the LP poition
 
 
@@ -37,7 +41,14 @@ event MetricsData(uint256 indexed_token_id, uint80 indexed, bytes _data)
 - This shows  the metrics needed for decision making on
 managing derivatives.
 
+- Now the `HedgeLPMetrics` informs on any change on liquidiyt on the position made by the user
+  - Respective metrics affected by such change must be updated
+- There needs to be other subscription, say the `HedgeVolumeMetrics` and `HedgeExternalOracle` all of them 
+feed the Metrics data over time.
 
+Our interest now is. Assuming we have the above subscription ready
+- The user can mint hedges to this position (provide the most generic informaiton shared by all hedges) for the minting
+and then select between VIX or american options defined by GreekFi on the library op-hooks.
 
 - The login service passses the tokenid of teh position and it's owner to the Facet  in charge of subscribing the user to the positions
 

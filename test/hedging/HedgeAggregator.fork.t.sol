@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import {Constants} from "@uniswap/v4-core/test/utils/Constants.sol";
 import "../../src/hedging/HedgeAggregator.sol";
 import "../../src/hedging/HedgeSubscriptionManager.sol";
-import "../../src/login/ListenerCallback.sol";
 import "../ForkTest.sol";
 import "../fork/ForkUtils.sol";
 import "./HedgeLPMetrics.fork.t.sol";

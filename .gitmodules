@@ -40,3 +40,7 @@
 [submodule "lib/system-smart-contracts"]
 	path = lib/system-smart-contracts
 	url = https://github.com/Reactive-Network/system-smart-contracts
+[submodule "lib/login"]
+	path = lib/login
+	url = https://github.com/wvs-finance/wvs-contracts.git
+	branch = feat/login

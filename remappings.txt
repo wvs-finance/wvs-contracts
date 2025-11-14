@@ -43,3 +43,5 @@ vixdex/=lib/vixdex/
 @uniswap/v4-periphery/=lib/v4-periphery/
 foundry-devops/=lib/foundry-devops/src/2
 reactive-system-contracts/=lib/system-smart-contracts/src/
+wvs-finance/login/=lib/login/src/login/
+wvs-finance-hedging/=lib/login/lib/hedging/src/hedging/
