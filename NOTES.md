@@ -30,7 +30,7 @@ $$
 
 
 ## DeFi State of Art
-
+================TODO
 How derivative DeFi contracts are handling time related architectures for maturity and other related events ?
 
 What are some common patterns and EIP's used
