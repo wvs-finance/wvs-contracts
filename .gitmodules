@@ -1,3 +1,6 @@
 [submodule "lib/govi-dao/cvi-contracts"]
 	path = lib/govi-dao/cvi-contracts
 	url = https://github.com/govi-dao/cvi-contracts
+[submodule "lib/vixdex"]
+	path = lib/vixdex
+	url = https://github.com/vixdex/vixdex
