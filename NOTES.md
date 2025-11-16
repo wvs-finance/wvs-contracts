@@ -3,6 +3,7 @@
 # Implementations
 
 - need to be collaterized on $X$
+
     - swapable to $oX$
 - has a redemption token $rX$
 - has a option token $oX$
@@ -63,4 +64,8 @@ user ---deposit(X)--> AMM --
 
 - burn expired tokens so they aren’t used for scams.
 
+----------------
+- LP is interested on forecasting volatility $\sigma$ to stay always on the optimal tick range
+
+- If current price is $P_{Y/X}$
 
