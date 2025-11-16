@@ -1,10 +1,8 @@
 
-[submodule "lib/op-hook"]
-	path = lib/op-hook
-	url = https://github.com/lababidi/op-hook
-[submodule "lib/protocol"]
-	path = lib/protocol
-	url = https://github.com/greekfi/protocol
 [submodule "lib/univ4-risk-neutral-hook"]
 	path = lib/univ4-risk-neutral-hook
 	url = https://github.com/scab24/univ4-risk-neutral-hook
+[submodule "lib/wvs-contracts"]
+	path = lib/wvs-contracts
+	url = https://github.com/wvs-finance/wvs-contracts
+	branch = feat/hedging
