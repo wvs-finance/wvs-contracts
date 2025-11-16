@@ -56,13 +56,25 @@
   "lib/system-smart-contracts": {
     "rev": "315e7350acb97b8425d3cfbd2eb6a93a7bf599b7"
   },
+  "lib/univ4-risk-neutral-hook": {
+    "rev": "9a897c19a0e99c91fd122b47ea9ca68a520c2755"
+  },
   "lib/universal-router": {
     "rev": "e1848a7a33b0b80f92460dacdf9491434351fefe"
+  },
+  "lib/v4-oracle-hook": {
+    "rev": "a83ec60e72bba3069e22c717398b9ce168af7a68"
   },
   "lib/v4-periphery": {
     "rev": "6601a199799294378f4df9819e6641b2391ef3c5"
   },
   "lib/vixdex": {
     "rev": "64cb8fb85ad149e05ed26d03447934da831765fc"
+  },
+  "lib/wvs-contracts": {
+    "branch": {
+      "name": "feat/hedging",
+      "rev": "69dadc9fd85668ad821521d3cbcc4f05b7a92465"
+    }
   }
 }

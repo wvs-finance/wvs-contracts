@@ -6,3 +6,9 @@
 	path = lib/wvs-contracts
 	url = https://github.com/wvs-finance/wvs-contracts
 	branch = feat/hedging
+[submodule "lib/v4-oracle-hook"]
+	path = lib/v4-oracle-hook
+	url = https://github.com/panoptic-labs/v4-oracle-hook
+[submodule "lib/panoptic-v1-core"]
+	path = lib/panoptic-v1-core
+	url = https://github.com/panoptic-labs/panoptic-v1-core

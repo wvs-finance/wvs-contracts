@@ -65,7 +65,23 @@ user ---deposit(X)--> AMM --
 - burn expired tokens so they aren’t used for scams.
 
 ----------------
-- LP is interested on forecasting volatility $\sigma$ to stay always on the optimal tick range
+- LP is interested on forecasting volatility $\hat{\sigma}$ to stay always on the optimal tick range
 
-- If current price is $P_{Y/X}$
+- If current price is $\big (P_{Y/X} )_0$
+
+$$
+\begin{align*}
+    \mathbb{P} \bigg [ (P_{Y/X} )_0 \in \big [P_l, P_u \big] \bigg | (P_{Y/X} )_T \in  \big [P_l, P_u \big] \bigg ] &= \
+    - \text{Erf} \bigg (\frac{\ln \big (\sqrt{\frac{P_b}{P_a}}\big)}{\sigma \sqrt{2T}}\bigg)
+\end{align*}
+$$
+
+- The implied volatility is the variance of the strike prices of options for a certain maturity time $T$
+
+
+$$
+\begin{align*}
+    \hat{\sigma} = 2 \cdot \phi \sqrt{\frac{\mathrm{V}\left([p_l, p_u]\right)}{r_x \cdot r_y}}
+\end{align*}
+$$
 
