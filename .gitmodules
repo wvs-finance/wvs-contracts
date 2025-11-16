@@ -1,6 +1,10 @@
-[submodule "lib/govi-dao/cvi-contracts"]
-	path = lib/govi-dao/cvi-contracts
-	url = https://github.com/govi-dao/cvi-contracts
-[submodule "lib/vixdex"]
-	path = lib/vixdex
-	url = https://github.com/vixdex/vixdex
+
+[submodule "lib/op-hook"]
+	path = lib/op-hook
+	url = https://github.com/lababidi/op-hook
+[submodule "lib/protocol"]
+	path = lib/protocol
+	url = https://github.com/greekfi/protocol
+[submodule "lib/univ4-risk-neutral-hook"]
+	path = lib/univ4-risk-neutral-hook
+	url = https://github.com/scab24/univ4-risk-neutral-hook

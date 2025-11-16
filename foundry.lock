@@ -26,6 +26,9 @@
       "rev": "efff097a87e70c3d15661c9f2a2daeae0b33d5d5"
     }
   },
+  "lib/govi-dao/cvi-contracts": {
+    "rev": "b4074b001f97c1eddff89ba4e0764158dc48d684"
+  },
   "lib/limit-order-protocol": {
     "tag": {
       "name": "4.3.2",

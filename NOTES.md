@@ -40,7 +40,13 @@ user ---deposit(X)--> AMM --
 
 ## Option Writer (seller)
 
+- LP position represents a perpetual call covered option on the quote token.
+
+ 
+- The LP is the SELLER
+ 
 - obligated to SELL the underlying collateral $X$ when __option owner__ calls `option.exercise`
+
 - can redeem consideration $Y$ prior to expiration
 - can redeem collateral $X$ post-expiration
 
@@ -56,3 +62,5 @@ user ---deposit(X)--> AMM --
  or Call, but a puzzle to the reader...
 
 - burn expired tokens so they aren’t used for scams.
+
+
