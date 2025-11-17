@@ -44,6 +44,9 @@
   "lib/op-hook": {
     "rev": "2301058f1b9aeee2a87fd75e29ca4372bc19743c"
   },
+  "lib/panoptic-v1-core": {
+    "rev": "df4dc38dee4fe29fd889cffaa8097dccc561e572"
+  },
   "lib/reactive-smart-contract-demos": {
     "rev": "8cbea302887b2ae81bb764abef239259ddb508f4"
   },
