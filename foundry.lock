@@ -32,6 +32,12 @@
       "rev": "67c56aee3b6a9f4982bf487084bd8da1f6638da0"
     }
   },
+  "lib/login": {
+    "branch": {
+      "name": "feat/login",
+      "rev": "1aa1fb737d88a741b1d972b09e32c2d7849aa1ce"
+    }
+  },
   "lib/op-hook": {
     "rev": "2301058f1b9aeee2a87fd75e29ca4372bc19743c"
   },
@@ -43,6 +49,9 @@
       "name": "v0.1.26",
       "rev": "acd959aa4bd04720d640bf4e6a5c71037510cc4b"
     }
+  },
+  "lib/system-smart-contracts": {
+    "rev": "315e7350acb97b8425d3cfbd2eb6a93a7bf599b7"
   },
   "lib/universal-router": {
     "rev": "e1848a7a33b0b80f92460dacdf9491434351fefe"

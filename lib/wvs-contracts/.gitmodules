@@ -1,0 +1,46 @@
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/vixdex"]
+	path = lib/vixdex
+	url = https://github.com/vixdex/vixdex
+[submodule "lib/op-hook"]
+	path = lib/op-hook
+	url = https://github.com/lababidi/op-hook
+[submodule "lib/v4-periphery"]
+	path = lib/v4-periphery
+	url = https://github.com/Uniswap/v4-periphery
+[submodule "lib/euler-price-oracle"]
+	path = lib/euler-price-oracle
+	url = https://github.com/euler-xyz/euler-price-oracle
+[submodule "lib/universal-router"]
+	path = lib/universal-router
+	url = https://github.com/Uniswap/universal-router
+[submodule "lib/reactive-smart-contract-demos"]
+	path = lib/reactive-smart-contract-demos
+	url = https://github.com/Reactive-Network/reactive-smart-contract-demos
+[submodule "lib/euler-vault-kit"]
+	path = lib/euler-vault-kit
+	url = https://github.com/euler-xyz/euler-vault-kit
+[submodule "lib/createx"]
+	path = lib/createx
+	url = https://github.com/pcaversaccio/createx
+[submodule "lib/Compose"]
+	path = lib/Compose
+	url = https://github.com/Perfect-Abstractions/Compose
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/Vectorized/solady
+[submodule "lib/limit-order-protocol"]
+	path = lib/limit-order-protocol
+	url = https://github.com/1inch/limit-order-protocol
+[submodule "lib/foundry-devops"]
+	path = lib/foundry-devops
+	url = https://github.com/Cyfrin/foundry-devops
+[submodule "lib/system-smart-contracts"]
+	path = lib/system-smart-contracts
+	url = https://github.com/Reactive-Network/system-smart-contracts
+[submodule "lib/login"]
+	path = lib/login
+	url = https://github.com/wvs-finance/wvs-contracts.git
+	branch = feat/login

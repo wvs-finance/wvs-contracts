@@ -1,0 +1,19 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+ffi=true
+via-ir = true
+bytecode_hash= "None"
+optimizer = true
+optimizer_runs = 1000
+
+fs_permissions = [
+    { access = "read", path = "./broadcast" },
+    { access = "read", path = "./reports" },
+]
+
+[profile.rpc]
+# unichain = "https://unichain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
